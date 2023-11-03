@@ -1,0 +1,452 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 800px;
+                 background-color: #FFFFFF;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+             #loadingBar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width: 100%;
+                 height: 800px;
+                 background-color:rgba(200,200,200,0.8);
+                 -webkit-transition: all 0.5s ease;
+                 -moz-transition: all 0.5s ease;
+                 -ms-transition: all 0.5s ease;
+                 -o-transition: all 0.5s ease;
+                 transition: all 0.5s ease;
+                 opacity:1;
+             }
+
+             #bar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width:20px;
+                 height:20px;
+                 margin:auto auto auto auto;
+                 border-radius:11px;
+                 border:2px solid rgba(30,30,30,0.05);
+                 background: rgb(0, 173, 246); /* Old browsers */
+                 box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+             }
+
+             #border {
+                 position:absolute;
+                 top:10px;
+                 left:10px;
+                 width:500px;
+                 height:23px;
+                 margin:auto auto auto auto;
+                 box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+                 border-radius:10px;
+             }
+
+             #text {
+                 position:absolute;
+                 top:8px;
+                 left:530px;
+                 width:30px;
+                 height:50px;
+                 margin:auto auto auto auto;
+                 font-size:22px;
+                 color: #000000;
+             }
+
+             div.outerBorder {
+                 position:relative;
+                 top:400px;
+                 width:600px;
+                 height:44px;
+                 margin:auto auto auto auto;
+                 border:8px solid rgba(0,0,0,0.1);
+                 background: rgb(252,252,252); /* Old browsers */
+                 background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+                 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+                 background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+                 background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+                 background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+                 background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+                 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+                 border-radius:72px;
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+             }
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+            <div id="loadingBar">
+              <div class="outerBorder">
+                <div id="text">0%</div>
+                <div id="border">
+                  <div id="bar"></div>
+                </div>
+              </div>
+            </div>
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "lightblue", "font": {"color": "black"}, "id": "  ABDOMEN:", "label": "  ABDOMEN:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Obstetrics / Gynecology", "label": " Obstetrics / Gynecology", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " General Medicine", "label": " General Medicine", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Consult - History and Phy.", "label": " Consult - History and Phy.", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Hematology - Oncology", "label": " Hematology - Oncology", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Discharge Summary", "label": " Discharge Summary", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Cardiovascular / Pulmonary", "label": " Cardiovascular / Pulmonary", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " SOAP / Chart / Progress Notes", "label": " SOAP / Chart / Progress Notes", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Letters", "label": " Letters", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Emergency Room Reports", "label": " Emergency Room Reports", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Office Notes", "label": " Office Notes", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Urology", "label": " Urology", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Nephrology", "label": " Nephrology", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Orthopedic", "label": " Orthopedic", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Dermatology", "label": " Dermatology", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Neurology", "label": " Neurology", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Psychiatry / Psychology", "label": " Psychiatry / Psychology", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Pediatrics - Neonatal", "label": " Pediatrics - Neonatal", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Endocrinology", "label": " Endocrinology", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  BIMANUAL:", "label": "  BIMANUAL:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  BMI:", "label": "  BMI:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  BREASTS:", "label": "  BREASTS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  CARDIOVASCULAR:", "label": "  CARDIOVASCULAR:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Diets and Nutritions", "label": " Diets and Nutritions", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Dentistry", "label": " Dentistry", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Rheumatology", "label": " Rheumatology", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  BACK:", "label": "  BACK:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  BMP:", "label": "  BMP:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  BP:", "label": "  BP:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  CARDIAC:", "label": "  CARDIAC:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Sleep Medicine", "label": " Sleep Medicine", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  AXIS I:", "label": "  AXIS I:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  AXIS II:", "label": "  AXIS II:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  AXIS III:", "label": "  AXIS III:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  AXIS IV:", "label": "  AXIS IV:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  AXILLA:", "label": "  AXILLA:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  CHEST:", "label": "  CHEST:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  CBC:", "label": "  CBC:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  EXTREMITIES:", "label": "  EXTREMITIES:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  HEART:", "label": "  HEART:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  HEENT:", "label": "  HEENT:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  NECK:", "label": "  NECK:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Gastroenterology", "label": " Gastroenterology", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Surgery", "label": " Surgery", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Chiropractic", "label": " Chiropractic", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Bariatrics", "label": " Bariatrics", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " ENT - Otolaryngology", "label": " ENT - Otolaryngology", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  CONSTITUTIONAL:", "label": "  CONSTITUTIONAL:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  CARDIOPULMONARY:", "label": "  CARDIOPULMONARY:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  ENDOCRINE:", "label": "  ENDOCRINE:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  GI:", "label": "  GI:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  GU:", "label": "  GU:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  GENERAL:", "label": "  GENERAL:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  LUNGS:", "label": "  LUNGS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  AWAKE:", "label": "  AWAKE:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  CLINICAL EVENTS:", "label": "  CLINICAL EVENTS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  DEVELOPMENT:", "label": "  DEVELOPMENT:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  HDL:", "label": "  HDL:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  LDL:", "label": "  LDL:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  VLDL:", "label": "  VLDL:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ASSESSMENT:", "label": "ASSESSMENT:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Allergy / Immunology", "label": " Allergy / Immunology", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Speech - Language", "label": " Speech - Language", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Neurosurgery", "label": " Neurosurgery", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Hospice - Palliative Care", "label": " Hospice - Palliative Care", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  GASTROINTESTINAL:", "label": "  GASTROINTESTINAL:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  GENITOURINARY:", "label": "  GENITOURINARY:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  ENT:", "label": "  ENT:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  DUODENUM:", "label": "  DUODENUM:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  EKG:", "label": "  EKG:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  ESOPHAGUS:", "label": "  ESOPHAGUS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  LV:", "label": "  LV:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  PROCEDURE:", "label": "  PROCEDURE:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " EXAMINEE :", "label": " EXAMINEE :", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " PROCEDURE:", "label": " PROCEDURE:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " RECOMMENDATIONS:", "label": " RECOMMENDATIONS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " WORKERS COMP:", "label": " WORKERS COMP:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " IME-QME-Work Comp etc.", "label": " IME-QME-Work Comp etc.", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ADMISSION DIAGNOSIS:", "label": "ADMISSION DIAGNOSIS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ALLERGIES TO MEDICATIONS:", "label": "ALLERGIES TO MEDICATIONS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ALLERGIES:", "label": "ALLERGIES:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ANESTHESIA:", "label": "ANESTHESIA:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Podiatry", "label": " Podiatry", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Cosmetic / Plastic Surgery", "label": " Cosmetic / Plastic Surgery", "shape": "dot", "size": 10, "type": "class"}, {"color": "green", "font": {"color": "black"}, "id": " Pain Management", "label": " Pain Management", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": " FACE:", "label": " FACE:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " LAB FINDINGS:", "label": " LAB FINDINGS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " MOUTH AND THROAT:", "label": " MOUTH AND THROAT:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " VITAL SIGNS:", "label": " VITAL SIGNS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  HEIGHT:", "label": "  HEIGHT:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Physical Medicine - Rehab", "label": " Physical Medicine - Rehab", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  WEIGHT:", "label": "  WEIGHT:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " AGE:", "label": " AGE:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " FLEXOR CARPI ULNARIS:", "label": " FLEXOR CARPI ULNARIS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " REVIEW OF SYSTEMS:", "label": " REVIEW OF SYSTEMS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  LEFT ANTERIOR DESCENDING ARTERY:", "label": "  LEFT ANTERIOR DESCENDING ARTERY:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Radiology", "label": " Radiology", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  LEFT CIRCUMFLEX:", "label": "  LEFT CIRCUMFLEX:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  LEFT MAIN:", "label": "  LEFT MAIN:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  RIGHT CORONARY ARTERY:", "label": "  RIGHT CORONARY ARTERY:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  RIGHT INTERNAL CAROTID ARTERY INJECTION:", "label": "  RIGHT INTERNAL CAROTID ARTERY INJECTION:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "  OD:", "label": "  OD:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Ophthalmology", "label": " Ophthalmology", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": " OD:", "label": " OD:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " OS:", "label": " OS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " OU:", "label": " OU:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " XYZ:", "label": " XYZ:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " B:", "label": " B:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Autopsy", "label": " Autopsy", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": " GASTROSTOMY:", "label": " GASTROSTOMY:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " LOWER LOBES:", "label": " LOWER LOBES:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " RIGHT ARYEPIGLOTTIC FOLD:", "label": " RIGHT ARYEPIGLOTTIC FOLD:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ACCESSORY SPLEEN:", "label": "ACCESSORY SPLEEN:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " DRESSING:", "label": " DRESSING:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " RESULTS:", "label": " RESULTS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ACTIVITY:", "label": "ACTIVITY:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ADDITIONAL DETAILS:", "label": "ADDITIONAL DETAILS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " GENERAL:", "label": " GENERAL:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": " HR:", "label": " HR:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "A:", "label": "A:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ABDOMEN:", "label": "ABDOMEN:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ADMITTING DIAGNOSIS:", "label": "ADMITTING DIAGNOSIS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "CHEST:", "label": "CHEST:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ADDITIONAL GOALS:", "label": "ADDITIONAL GOALS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "CERVICAL ESOPHAGEAL STAGE:", "label": "CERVICAL ESOPHAGEAL STAGE:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "CURRENT MEDICATIONS:", "label": "CURRENT MEDICATIONS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "DIAGNOSIS:", "label": "DIAGNOSIS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "green", "font": {"color": "black"}, "id": " Lab Medicine - Pathology", "label": " Lab Medicine - Pathology", "shape": "dot", "size": 10, "type": "class"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ANESTHESIOLOGY:", "label": "ANESTHESIOLOGY:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ASSISTANT:", "label": "ASSISTANT:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "ASSESSMENT AND PLAN:", "label": "ASSESSMENT AND PLAN:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "FAMILY HISTORY:", "label": "FAMILY HISTORY:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "HISTORY OF PRESENT ILLNESS:", "label": "HISTORY OF PRESENT ILLNESS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "BLOOD PRODUCTS RECEIVED:", "label": "BLOOD PRODUCTS RECEIVED:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "COMPLICATIONS:", "label": "COMPLICATIONS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "CLINICAL HISTORY:", "label": "CLINICAL HISTORY:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "COMMENT:", "label": "COMMENT:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "COMMENTS:", "label": "COMMENTS:", "shape": "dot", "size": 10, "type": "header"}, {"color": "lightblue", "font": {"color": "black"}, "id": "DIAGNOSTIC OPINION:", "label": "DIAGNOSTIC OPINION:", "shape": "dot", "size": 10, "type": "header"}]);
+                  edges = new vis.DataSet([{"color": "grey", "from": "  ABDOMEN:", "to": " Obstetrics / Gynecology", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " General Medicine", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Consult - History and Phy.", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Hematology - Oncology", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Discharge Summary", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Cardiovascular / Pulmonary", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " SOAP / Chart / Progress Notes", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Letters", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Emergency Room Reports", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Office Notes", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Urology", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Nephrology", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Orthopedic", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Dermatology", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Neurology", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Psychiatry / Psychology", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Pediatrics - Neonatal", "width": 1}, {"color": "grey", "from": "  ABDOMEN:", "to": " Endocrinology", "width": 1}, {"color": "grey", "from": " Obstetrics / Gynecology", "to": "  BIMANUAL:", "width": 1}, {"color": "grey", "from": " Obstetrics / Gynecology", "to": "  BMI:", "width": 1}, {"color": "grey", "from": " Obstetrics / Gynecology", "to": "  BREASTS:", "width": 1}, {"color": "grey", "from": " Obstetrics / Gynecology", "to": "  CARDIOVASCULAR:", "width": 1}, {"color": "grey", "from": "  BMI:", "to": " SOAP / Chart / Progress Notes", "width": 1}, {"color": "grey", "from": "  BMI:", "to": " Pediatrics - Neonatal", "width": 1}, {"color": "grey", "from": "  BMI:", "to": " Diets and Nutritions", "width": 1}, {"color": "grey", "from": "  CARDIOVASCULAR:", "to": " Hematology - Oncology", "width": 1}, {"color": "grey", "from": "  CARDIOVASCULAR:", "to": " Cardiovascular / Pulmonary", "width": 1}, {"color": "grey", "from": "  CARDIOVASCULAR:", "to": " Emergency Room Reports", "width": 1}, {"color": "grey", "from": "  CARDIOVASCULAR:", "to": " Urology", "width": 1}, {"color": "grey", "from": "  CARDIOVASCULAR:", "to": " Nephrology", "width": 1}, {"color": "grey", "from": "  CARDIOVASCULAR:", "to": " Neurology", "width": 1}, {"color": "grey", "from": "  CARDIOVASCULAR:", "to": " Pediatrics - Neonatal", "width": 1}, {"color": "grey", "from": "  CARDIOVASCULAR:", "to": " Endocrinology", "width": 1}, {"color": "grey", "from": "  CARDIOVASCULAR:", "to": " Dentistry", "width": 1}, {"color": "grey", "from": "  CARDIOVASCULAR:", "to": " Rheumatology", "width": 1}, {"color": "grey", "from": " General Medicine", "to": "  BACK:", "width": 1}, {"color": "grey", "from": " General Medicine", "to": "  BMP:", "width": 1}, {"color": "grey", "from": " General Medicine", "to": "  BP:", "width": 1}, {"color": "grey", "from": " General Medicine", "to": "  CARDIAC:", "width": 1}, {"color": "grey", "from": "  BACK:", "to": " Emergency Room Reports", "width": 1}, {"color": "grey", "from": "  BMP:", "to": " Discharge Summary", "width": 1}, {"color": "grey", "from": "  BP:", "to": " Cardiovascular / Pulmonary", "width": 1}, {"color": "grey", "from": "  BP:", "to": " SOAP / Chart / Progress Notes", "width": 1}, {"color": "grey", "from": "  BP:", "to": " Sleep Medicine", "width": 1}, {"color": "grey", "from": "  CARDIAC:", "to": " Hematology - Oncology", "width": 1}, {"color": "grey", "from": "  CARDIAC:", "to": " Cardiovascular / Pulmonary", "width": 1}, {"color": "grey", "from": "  CARDIAC:", "to": " SOAP / Chart / Progress Notes", "width": 1}, {"color": "grey", "from": "  CARDIAC:", "to": " Emergency Room Reports", "width": 1}, {"color": "grey", "from": "  CARDIAC:", "to": " Office Notes", "width": 1}, {"color": "grey", "from": "  CARDIAC:", "to": " Nephrology", "width": 1}, {"color": "grey", "from": "  CARDIAC:", "to": " Orthopedic", "width": 1}, {"color": "grey", "from": "  CARDIAC:", "to": " Dermatology", "width": 1}, {"color": "grey", "from": "  CARDIAC:", "to": " Sleep Medicine", "width": 1}, {"color": "grey", "from": " Consult - History and Phy.", "to": "  AXIS I:", "width": 1}, {"color": "grey", "from": " Consult - History and Phy.", "to": "  AXIS II:", "width": 1}, {"color": "grey", "from": " Consult - History and Phy.", "to": "  AXIS III:", "width": 1}, {"color": "grey", "from": " Consult - History and Phy.", "to": "  AXIS IV:", "width": 1}, {"color": "grey", "from": "  AXIS I:", "to": " Psychiatry / Psychology", "width": 1}, {"color": "grey", "from": "  AXIS II:", "to": " Psychiatry / Psychology", "width": 1}, {"color": "grey", "from": "  AXIS III:", "to": " Psychiatry / Psychology", "width": 1}, {"color": "grey", "from": "  AXIS IV:", "to": " Psychiatry / Psychology", "width": 1}, {"color": "grey", "from": " Hematology - Oncology", "to": "  AXILLA:", "width": 1}, {"color": "grey", "from": " Hematology - Oncology", "to": "  CHEST:", "width": 1}, {"color": "grey", "from": "  AXILLA:", "to": " SOAP / Chart / Progress Notes", "width": 1}, {"color": "grey", "from": "  CHEST:", "to": " Cardiovascular / Pulmonary", "width": 1}, {"color": "grey", "from": "  CHEST:", "to": " Letters", "width": 1}, {"color": "grey", "from": "  CHEST:", "to": " Office Notes", "width": 1}, {"color": "grey", "from": "  CHEST:", "to": " Nephrology", "width": 1}, {"color": "grey", "from": "  CHEST:", "to": " Neurology", "width": 1}, {"color": "grey", "from": "  CHEST:", "to": " Sleep Medicine", "width": 1}, {"color": "grey", "from": " Discharge Summary", "to": "  CBC:", "width": 1}, {"color": "grey", "from": " Discharge Summary", "to": "  EXTREMITIES:", "width": 1}, {"color": "grey", "from": " Discharge Summary", "to": "  HEART:", "width": 1}, {"color": "grey", "from": "  EXTREMITIES:", "to": " Letters", "width": 1}, {"color": "grey", "from": "  EXTREMITIES:", "to": " Office Notes", "width": 1}, {"color": "grey", "from": "  EXTREMITIES:", "to": " Orthopedic", "width": 1}, {"color": "grey", "from": "  EXTREMITIES:", "to": " Endocrinology", "width": 1}, {"color": "grey", "from": "  EXTREMITIES:", "to": " Rheumatology", "width": 1}, {"color": "grey", "from": " Letters", "to": "  HEENT:", "width": 1}, {"color": "grey", "from": " Letters", "to": "  NECK:", "width": 1}, {"color": "grey", "from": "  HEENT:", "to": " Office Notes", "width": 1}, {"color": "grey", "from": "  HEENT:", "to": " Dermatology", "width": 1}, {"color": "grey", "from": "  HEENT:", "to": " Endocrinology", "width": 1}, {"color": "grey", "from": "  HEENT:", "to": " Dentistry", "width": 1}, {"color": "grey", "from": "  HEENT:", "to": " Rheumatology", "width": 1}, {"color": "grey", "from": "  HEENT:", "to": " Gastroenterology", "width": 1}, {"color": "grey", "from": "  HEENT:", "to": " Surgery", "width": 1}, {"color": "grey", "from": "  HEENT:", "to": " Chiropractic", "width": 1}, {"color": "grey", "from": "  HEENT:", "to": " Bariatrics", "width": 1}, {"color": "grey", "from": "  HEENT:", "to": " ENT - Otolaryngology", "width": 1}, {"color": "grey", "from": "  NECK:", "to": " Endocrinology", "width": 1}, {"color": "grey", "from": " Emergency Room Reports", "to": "  CONSTITUTIONAL:", "width": 1}, {"color": "grey", "from": "  CONSTITUTIONAL:", "to": " Urology", "width": 1}, {"color": "grey", "from": "  CONSTITUTIONAL:", "to": " Nephrology", "width": 1}, {"color": "grey", "from": "  CONSTITUTIONAL:", "to": " Dentistry", "width": 1}, {"color": "grey", "from": " Urology", "to": "  CARDIOPULMONARY:", "width": 1}, {"color": "grey", "from": " Urology", "to": "  ENDOCRINE:", "width": 1}, {"color": "grey", "from": "  ENDOCRINE:", "to": " Pediatrics - Neonatal", "width": 1}, {"color": "grey", "from": " Orthopedic", "to": "  GI:", "width": 1}, {"color": "grey", "from": " Orthopedic", "to": "  GU:", "width": 1}, {"color": "grey", "from": " Dermatology", "to": "  GENERAL:", "width": 1}, {"color": "grey", "from": " Dermatology", "to": "  LUNGS:", "width": 1}, {"color": "grey", "from": "  GENERAL:", "to": " Rheumatology", "width": 1}, {"color": "grey", "from": " Neurology", "to": "  AWAKE:", "width": 1}, {"color": "grey", "from": " Neurology", "to": "  CLINICAL EVENTS:", "width": 1}, {"color": "grey", "from": "  AWAKE:", "to": " Sleep Medicine", "width": 1}, {"color": "grey", "from": "  CLINICAL EVENTS:", "to": " Sleep Medicine", "width": 1}, {"color": "grey", "from": " Pediatrics - Neonatal", "to": "  DEVELOPMENT:", "width": 1}, {"color": "grey", "from": " Diets and Nutritions", "to": "  HDL:", "width": 1}, {"color": "grey", "from": " Diets and Nutritions", "to": "  LDL:", "width": 1}, {"color": "grey", "from": " Diets and Nutritions", "to": "  VLDL:", "width": 1}, {"color": "grey", "from": " Diets and Nutritions", "to": "ASSESSMENT:", "width": 1}, {"color": "grey", "from": "ASSESSMENT:", "to": " Allergy / Immunology", "width": 1}, {"color": "grey", "from": "ASSESSMENT:", "to": " Speech - Language", "width": 1}, {"color": "grey", "from": "ASSESSMENT:", "to": " Neurosurgery", "width": 1}, {"color": "grey", "from": "ASSESSMENT:", "to": " Hospice - Palliative Care", "width": 1}, {"color": "grey", "from": " Dentistry", "to": "  GASTROINTESTINAL:", "width": 1}, {"color": "grey", "from": " Dentistry", "to": "  GENITOURINARY:", "width": 1}, {"color": "grey", "from": " Rheumatology", "to": "  ENT:", "width": 1}, {"color": "grey", "from": "  ENT:", "to": " Gastroenterology", "width": 1}, {"color": "grey", "from": "  DUODENUM:", "to": " Gastroenterology", "width": 1}, {"color": "grey", "from": "  DUODENUM:", "to": " Surgery", "width": 1}, {"color": "grey", "from": " Gastroenterology", "to": "  EKG:", "width": 1}, {"color": "grey", "from": " Gastroenterology", "to": "  ESOPHAGUS:", "width": 1}, {"color": "grey", "from": "  ESOPHAGUS:", "to": " Surgery", "width": 1}, {"color": "grey", "from": " Surgery", "to": "  LV:", "width": 1}, {"color": "grey", "from": " Surgery", "to": "  PROCEDURE:", "width": 1}, {"color": "grey", "from": " Chiropractic", "to": " EXAMINEE :", "width": 1}, {"color": "grey", "from": " Chiropractic", "to": " PROCEDURE:", "width": 1}, {"color": "grey", "from": " Chiropractic", "to": " RECOMMENDATIONS:", "width": 1}, {"color": "grey", "from": " Chiropractic", "to": " WORKERS COMP:", "width": 1}, {"color": "grey", "from": " EXAMINEE :", "to": " IME-QME-Work Comp etc.", "width": 1}, {"color": "grey", "from": " PROCEDURE:", "to": " IME-QME-Work Comp etc.", "width": 1}, {"color": "grey", "from": " RECOMMENDATIONS:", "to": " IME-QME-Work Comp etc.", "width": 1}, {"color": "grey", "from": " Bariatrics", "to": "ADMISSION DIAGNOSIS:", "width": 1}, {"color": "grey", "from": " Bariatrics", "to": "ALLERGIES TO MEDICATIONS:", "width": 1}, {"color": "grey", "from": " Bariatrics", "to": "ALLERGIES:", "width": 1}, {"color": "grey", "from": " Bariatrics", "to": "ANESTHESIA:", "width": 1}, {"color": "grey", "from": "ALLERGIES:", "to": " IME-QME-Work Comp etc.", "width": 1}, {"color": "grey", "from": "ALLERGIES:", "to": " Podiatry", "width": 1}, {"color": "grey", "from": "ALLERGIES:", "to": " Allergy / Immunology", "width": 1}, {"color": "grey", "from": "ALLERGIES:", "to": " Hospice - Palliative Care", "width": 1}, {"color": "grey", "from": "ALLERGIES:", "to": " Cosmetic / Plastic Surgery", "width": 1}, {"color": "grey", "from": "ANESTHESIA:", "to": " Pain Management", "width": 1}, {"color": "grey", "from": "ANESTHESIA:", "to": " Neurosurgery", "width": 1}, {"color": "grey", "from": "ANESTHESIA:", "to": " Cosmetic / Plastic Surgery", "width": 1}, {"color": "grey", "from": " ENT - Otolaryngology", "to": " FACE:", "width": 1}, {"color": "grey", "from": " ENT - Otolaryngology", "to": " LAB FINDINGS:", "width": 1}, {"color": "grey", "from": " ENT - Otolaryngology", "to": " MOUTH AND THROAT:", "width": 1}, {"color": "grey", "from": " ENT - Otolaryngology", "to": " VITAL SIGNS:", "width": 1}, {"color": "grey", "from": "  HEIGHT:", "to": " Physical Medicine - Rehab", "width": 1}, {"color": "grey", "from": " Physical Medicine - Rehab", "to": "  WEIGHT:", "width": 1}, {"color": "grey", "from": " Physical Medicine - Rehab", "to": " AGE:", "width": 1}, {"color": "grey", "from": " Physical Medicine - Rehab", "to": " FLEXOR CARPI ULNARIS:", "width": 1}, {"color": "grey", "from": " Physical Medicine - Rehab", "to": " REVIEW OF SYSTEMS:", "width": 1}, {"color": "grey", "from": "  LEFT ANTERIOR DESCENDING ARTERY:", "to": " Radiology", "width": 1}, {"color": "grey", "from": " Radiology", "to": "  LEFT CIRCUMFLEX:", "width": 1}, {"color": "grey", "from": " Radiology", "to": "  LEFT MAIN:", "width": 1}, {"color": "grey", "from": " Radiology", "to": "  RIGHT CORONARY ARTERY:", "width": 1}, {"color": "grey", "from": " Radiology", "to": "  RIGHT INTERNAL CAROTID ARTERY INJECTION:", "width": 1}, {"color": "grey", "from": "  OD:", "to": " Ophthalmology", "width": 1}, {"color": "grey", "from": " Ophthalmology", "to": " OD:", "width": 1}, {"color": "grey", "from": " Ophthalmology", "to": " OS:", "width": 1}, {"color": "grey", "from": " Ophthalmology", "to": " OU:", "width": 1}, {"color": "grey", "from": " Ophthalmology", "to": " XYZ:", "width": 1}, {"color": "grey", "from": " B:", "to": " Autopsy", "width": 1}, {"color": "grey", "from": " Autopsy", "to": " GASTROSTOMY:", "width": 1}, {"color": "grey", "from": " Autopsy", "to": " LOWER LOBES:", "width": 1}, {"color": "grey", "from": " Autopsy", "to": " RIGHT ARYEPIGLOTTIC FOLD:", "width": 1}, {"color": "grey", "from": " Autopsy", "to": "ACCESSORY SPLEEN:", "width": 1}, {"color": "grey", "from": " DRESSING:", "to": " Pain Management", "width": 1}, {"color": "grey", "from": " Pain Management", "to": " RESULTS:", "width": 1}, {"color": "grey", "from": " Pain Management", "to": "ACTIVITY:", "width": 1}, {"color": "grey", "from": " Pain Management", "to": "ADDITIONAL DETAILS:", "width": 1}, {"color": "grey", "from": " IME-QME-Work Comp etc.", "to": " GENERAL:", "width": 1}, {"color": "grey", "from": " HR:", "to": " Podiatry", "width": 1}, {"color": "grey", "from": " Podiatry", "to": "A:", "width": 1}, {"color": "grey", "from": " Podiatry", "to": "ABDOMEN:", "width": 1}, {"color": "grey", "from": " Podiatry", "to": "ADMITTING DIAGNOSIS:", "width": 1}, {"color": "grey", "from": "ABDOMEN:", "to": " Allergy / Immunology", "width": 1}, {"color": "grey", "from": "ADMITTING DIAGNOSIS:", "to": " Allergy / Immunology", "width": 1}, {"color": "grey", "from": "ADMITTING DIAGNOSIS:", "to": " Neurosurgery", "width": 1}, {"color": "grey", "from": " Allergy / Immunology", "to": "CHEST:", "width": 1}, {"color": "grey", "from": "ADDITIONAL GOALS:", "to": " Speech - Language", "width": 1}, {"color": "grey", "from": " Speech - Language", "to": "CERVICAL ESOPHAGEAL STAGE:", "width": 1}, {"color": "grey", "from": " Speech - Language", "to": "CURRENT MEDICATIONS:", "width": 1}, {"color": "grey", "from": " Speech - Language", "to": "DIAGNOSIS:", "width": 1}, {"color": "grey", "from": "DIAGNOSIS:", "to": " Lab Medicine - Pathology", "width": 1}, {"color": "grey", "from": " Neurosurgery", "to": "ANESTHESIOLOGY:", "width": 1}, {"color": "grey", "from": " Neurosurgery", "to": "ASSISTANT:", "width": 1}, {"color": "grey", "from": "ASSISTANT:", "to": " Cosmetic / Plastic Surgery", "width": 1}, {"color": "grey", "from": " Hospice - Palliative Care", "to": "ASSESSMENT AND PLAN:", "width": 1}, {"color": "grey", "from": " Hospice - Palliative Care", "to": "FAMILY HISTORY:", "width": 1}, {"color": "grey", "from": " Hospice - Palliative Care", "to": "HISTORY OF PRESENT ILLNESS:", "width": 1}, {"color": "grey", "from": " Cosmetic / Plastic Surgery", "to": "BLOOD PRODUCTS RECEIVED:", "width": 1}, {"color": "grey", "from": " Cosmetic / Plastic Surgery", "to": "COMPLICATIONS:", "width": 1}, {"color": "grey", "from": "CLINICAL HISTORY:", "to": " Lab Medicine - Pathology", "width": 1}, {"color": "grey", "from": " Lab Medicine - Pathology", "to": "COMMENT:", "width": 1}, {"color": "grey", "from": " Lab Medicine - Pathology", "to": "COMMENTS:", "width": 1}, {"color": "grey", "from": " Lab Medicine - Pathology", "to": "DIAGNOSTIC OPINION:", "width": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.3,
+            "damping": 0.09,
+            "gravitationalConstant": -80000,
+            "springConstant": 0.001,
+            "springLength": 250
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+                      network.on("stabilizationProgress", function(params) {
+                          document.getElementById('loadingBar').removeAttribute("style");
+                          var maxWidth = 496;
+                          var minWidth = 20;
+                          var widthFactor = params.iterations/params.total;
+                          var width = Math.max(minWidth,maxWidth * widthFactor);
+                          document.getElementById('bar').style.width = width + 'px';
+                          document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+                      });
+                      network.once("stabilizationIterationsDone", function() {
+                          document.getElementById('text').innerHTML = '100%';
+                          document.getElementById('bar').style.width = '496px';
+                          document.getElementById('loadingBar').style.opacity = 0;
+                          // really clean the dom element
+                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+                      });
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
