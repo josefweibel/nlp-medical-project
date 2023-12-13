@@ -4,13 +4,22 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-datasets = "*"
-pandas = "*"
 numpy = "*"
-transformers = "*"
-seaborn = "*"
-nltk = "*"
 scikit-learn = "*"
+ipykernel = "*"
+pandas = "*"
+matplotlib = "*"
+seaborn = "*"
+datasets = "*"
+langdetect = "*"
+nltk = "*"
+spacy = "*"
+transformers = "*"
+torch = "*"
+accelerate = "*"
+evaluate = "*"
+scikit-multilearn = "*"
+imbalanced-learn = "*"
 
 [dev-packages]
 ipykernel = "*"
