@@ -159,5 +159,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 .DS_Store
-models
+models/bert-base-uncased
+models/dmis-lab/biobert-base-cased-v1.2
+models/medicalai/ClinicalBERT
 wandb
