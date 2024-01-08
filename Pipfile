@@ -20,6 +20,7 @@ accelerate = "*"
 evaluate = "*"
 scikit-multilearn = "*"
 imbalanced-learn = "*"
+xgboost = "*"
 
 [dev-packages]
 ipykernel = "*"
