@@ -6,13 +6,14 @@ We were given 3 tasks:
 * Task 1: Data Exploration and Processing in 'Task1.ipynb'
   - Computing some basic statistics of the data, we found that the dataset is very unbalanced and that it includes not only Single-Labels but Multi-Labels and that the text lenght of the texts with certain Labels do vary a lot.
 
-#### Key Visualizations of Task 1 (EDA)
+### Key EDA plots
 - Distribution of Text Lengths
-![Distribution of Text Lengths](/plots/distribution_of_text_lengths.png)
+<img src="/plots/distribution_of_text_lengths.png" width="600">
 - Distribution of Labels
-![Distribution of Labels](/plots/distribution_labels.png)
+<img src="/plots/distribution_labels.png" width="600">
 - Heatmap of Text Length vs. Class Distribution
-![Heatmap of Text Length vs. Class Distribution](/plots/heatmap_text_length_class_distribution.png)
+<img src="/plots/heatmap_text_length_class_distribution.png" width="600">
+
 
 
 * Task 2: NER in 'Task2.ipynb'
