@@ -6,7 +6,7 @@ We were given 3 tasks:
 * Task 1: Data Exploration and Processing in 'Task1.ipynb'
   - Computing some basic statistics of the data, we found that the dataset is very unbalanced and that it includes not only Single-Labels but Multi-Labels and that the text lenght of the texts with certain Labels do vary a lot.
 
-### Key EDA plots
+Some key statistics are:
 - Distribution of Text Lengths
 <img src="/plots/distribution_of_text_lengths.png" width="600">
 - Distribution of Labels
