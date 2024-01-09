@@ -12,7 +12,7 @@ We were given 3 tasks:
 - Distribution of Labels
 ![Distribution of Labels](/plots/distribution_labels.png)
 - Heatmap of Text Length vs. Class Distribution
-![Heatmap of Text Length vs. Class Distribution](/plots/heatmap_text_length_vs_class_distribution.png)
+![Heatmap of Text Length vs. Class Distribution](/plots/heatmap_text_length_class_distribution.png)
 
 
 * Task 2: NER in 'Task2.ipynb'
