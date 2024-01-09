@@ -40,6 +40,6 @@ We were given 3 tasks:
  The Baseline models show consistent performance with a good balance between precision and recall, while the fine-tuned models like BERT and ClinicalBERT demonstrate improvements in specific metrics. The Llama models exhibit varying degrees of performance across different medical text categories, with the Llama 2 (13B) model generally outperforming the Llama 2 (7B) model. Despite their advancements, these models still face challenges in accurately categorizing medical texts, as seen in the varying F1-scores. This evaluation serves as a critical assessment for future improvements in model training and application in the medical field.
 
 
-These notebook provide details about our work. A sumamrisation of it can be found in the presentation stored in directory `presentations`.
+These notebook provide details about our work. Further summarization and details on explanation can be found in the presentation stored in directory `presentations`.
 
 Requirements are specificed in the `requirements.txt` or `Pipfile`.
