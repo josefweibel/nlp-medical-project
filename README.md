@@ -36,9 +36,11 @@ We tried to classify the texts into 40 different categories using different mode
 
 #### F1-Scores by Model
 - overall Scores 
-![overall Scores](/plots/overall_scores.png)
+<img src="/plots/overall_scores.png" width="400">
+
 - statistics for generated responses
-![statistics for generated responses](/plots/generated_responses.png)
+<img src="/plots/generated_responses.png" width="400">
+
 
 Baseline models show consistent performance with a good balance between precision and recall, while the fine-tuned models like BERT and ClinicalBERT demonstrate improvements in specific metrics. The Llama models exhibit varying degrees of performance across different medical text categories, with the Llama 2 (13B) model generally outperforming the Llama 2 (7B) model.
 
